@@ -1,9 +1,4 @@
-export interface Vehicle {
-  vin: string;
-  make: string;
-  model: string;
-  price: string;
-}
+import { Vehicle } from './app.types';
 
 export const vehicles: Vehicle[] = [
   {
