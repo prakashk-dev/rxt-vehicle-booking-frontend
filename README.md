@@ -1,14 +1,14 @@
-# Frontend
+# RTX Vehicle Booking Frontend
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.2.1.
 
 ## Development server
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+To connect the API locally, please download the backend project from [Rtx Vehicle Booking Backend](https://github.com/prakashk-dev/rxt-vehicle-booking-backend) and run the project. By default it runs on port 3000, if not you have to change the `apiUrl` variable from https://github.com/prakashk-dev/rxt-vehicle-booking-frontend/blob/main/src/app/service/app.service.ts#L5.
 
-## Code scaffolding
+If you want to use serverless backend, please change [this](https://github.com/prakashk-dev/rxt-vehicle-booking-frontend/blob/main/src/app/service/app.service.ts#L12) variable to use `SERVERLESS_API_URL` instead of `DEV_API_URL`;
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+After you run the backend project or decided to use serverless and made the necessary changes, run `npm start` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
 
 ## Build
 
