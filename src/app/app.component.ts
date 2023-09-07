@@ -5,48 +5,65 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { vehicles } from './vehicles-mock';
-import { Observable, of } from 'rxjs';
-import * as dayjs from 'dayjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { EMPTY, Observable, catchError } from 'rxjs';
 import { IFormSelect, IFormValue, Vehicle } from './app.types';
-
+import { AppService } from './service/app.service';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
 })
+@UntilDestroy()
 export class AppComponent implements OnInit {
-  myForm?: FormGroup;
-  makes: IFormSelect[] = [];
-  models: IFormSelect[] = [];
-  allVehicles: Vehicle[] = [];
+  minDate = new Date();
+  formGroup?: FormGroup;
+  vehicleMakes: IFormSelect[] = [];
+  vehicleModels: IFormSelect[] = [];
+  vehicleMakeToModels: Record<string, string[]> = {};
   availableVehicles: Vehicle[] = [];
   displayedColumns: string[] = ['make', 'model', 'vin', 'price'];
-  constructor(private fb: FormBuilder) {}
+  serverError: string = '';
+
+  constructor(private fb: FormBuilder, private appService: AppService) {}
 
   ngOnInit(): void {
-    // get this data from the backend
-    this.fetchVehicles().subscribe((vehicles) => {
-      this.allVehicles = vehicles;
-      this.createForm();
-      this.watchForMakeChanges();
-      // backend will send this one
-      this.makes = this.calculateUniqueMakes();
-    });
+    this.fetchVehicleMakeAndModels();
+    this.createForm();
+    this.watchForMakeChanges();
   }
 
-  private fetchVehicles(): Observable<Vehicle[]> {
-    const sortedVehicles: Vehicle[] = vehicles.sort((a, b) => {
-      if (a.make === b.make) {
-        return a.model.localeCompare(b.model);
-      }
-      return a.make.localeCompare(b.make);
-    });
-    return of(sortedVehicles);
+  private fetchVehicleMakeAndModels(): void {
+    this.appService
+      .getMakeAndModels()
+      .pipe(
+        untilDestroyed(this),
+        catchError((err) => this.handleError(err))
+      )
+      .subscribe((data) => {
+        this.serverError = '';
+        this.vehicleMakeToModels = data;
+        this.vehicleMakes = this.createVehicleMakeData(data);
+      });
+  }
+
+  private createVehicleMakeData(
+    vehicleMakeToModels: Record<string, string[]>
+  ): IFormSelect[] {
+    const vehicleMakesSelectData: IFormSelect[] = Object.keys(
+      vehicleMakeToModels
+    ).map((make) => ({
+      value: make,
+      viewValue: make,
+    }));
+    // sort the makes alphabetically
+    vehicleMakesSelectData.sort((a, b) =>
+      a.viewValue.localeCompare(b.viewValue)
+    );
+    return vehicleMakesSelectData;
   }
 
   private createForm(): void {
-    this.myForm = this.fb.group({
+    this.formGroup = this.fb.group({
       // we are assuming that the user can select only one make at a time
       make: new FormControl(''),
       // we are assuming that the user can select only one model at a time
@@ -59,64 +76,61 @@ export class AppComponent implements OnInit {
     });
   }
 
-  private calculateUniqueMakes(): IFormSelect[] {
-    const makeHash: Record<string, string> = {};
-    const makes: IFormSelect[] = [];
-
-    this.allVehicles.forEach((vehicle) => {
-      if (makeHash[vehicle.make]) return;
-
-      makeHash[vehicle.make] = vehicle.make;
-      makes.push({ value: vehicle.make, viewValue: vehicle.make });
-    });
-    return makes;
-  }
-
   private watchForMakeChanges(): void {
-    const modelControl = this.myForm?.get('model');
-    this.myForm?.get('make')?.valueChanges.subscribe((value) => {
+    const modelControl = this.formGroup?.get('model');
+    const makeControl = this.formGroup?.get('make');
+    makeControl?.valueChanges.pipe(untilDestroyed(this)).subscribe((value) => {
+      // enable model selection only if make is selected
       value ? modelControl?.enable() : modelControl?.disable();
+      // reset model selection if make is changed
       modelControl?.setValue('');
-      this.calculateSelectedVehicleModels();
+      this.vehicleModels = this.createVehicleModelData(
+        this.vehicleMakeToModels[makeControl?.value]
+      );
     });
   }
 
-  private calculateSelectedVehicleModels(): void {
-    const selectedVehicleModels = this.allVehicles.filter(
-      (vehicle) => vehicle.make === this.myForm?.get('make')?.value
+  private createVehicleModelData(vehicleModels: string[]): IFormSelect[] {
+    const vehicleModelsSelectData = vehicleModels.map((model) => ({
+      value: model,
+      viewValue: model,
+    }));
+
+    vehicleModelsSelectData.sort((a, b) =>
+      a.viewValue.localeCompare(b.viewValue)
     );
-    this.models = this.getUniqueModels(selectedVehicleModels);
-  }
-
-  private getUniqueModels(vehicles: Vehicle[]): IFormSelect[] {
-    const modelHash: Record<string, string> = {};
-    const models: IFormSelect[] = [];
-    vehicles.forEach((vehicle) => {
-      if (modelHash[vehicle.model]) return;
-      modelHash[vehicle.model] = vehicle.model;
-      models.push({ value: vehicle.model, viewValue: vehicle.model });
-    });
-    return models;
+    return vehicleModelsSelectData;
   }
 
   onSubmit(): void {
-    if (this.myForm?.invalid) return;
-    console.log(this.parsedFormValue);
-    this.availableVehicles = this.allVehicles;
+    if (this.formGroup?.invalid) return;
+    this.appService
+      .getAvailableCars(this.parsedFormValue)
+      .pipe(
+        untilDestroyed(this),
+        catchError((err) => this.handleError(err))
+      )
+      .subscribe((data) => {
+        // sort the result by model
+        this.availableVehicles = data.sort((a, b) =>
+          a.model.localeCompare(b.model)
+        );
+      });
   }
 
   private get parsedFormValue(): IFormValue {
-    const formValue: IFormValue = { ...this.myForm?.value };
+    const formValue: IFormValue = { ...this.formGroup?.value };
     // delete all the empty values
     Object.keys(formValue).forEach(
       (key) =>
         formValue[key as keyof IFormValue] === '' &&
         delete formValue[key as keyof IFormValue]
     );
-    return {
-      ...formValue,
-      startDate: dayjs(this.myForm?.value.startDate).format('DD/MM/YYYY'),
-      endDate: dayjs(this.myForm?.value.endDate).format('DD/MM/YYYY'),
-    };
+    return formValue;
+  }
+
+  private handleError(err: any): Observable<never> {
+    this.serverError = err.message || 'Something went wrong';
+    return EMPTY;
   }
 }
