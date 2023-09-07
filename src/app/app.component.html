@@ -1,51 +1,86 @@
 <div class="tw-w-[60%] tw-m-auto tw-mt-10" *ngIf="myForm">
-  <form class="tw-flex tw-flex-col tw-gap-5" [formGroup]="myForm" (ngSubmit)="onSubmit()">
-    <div class="tw-flex tw-w-full">
-      <mat-form-field>
-        <mat-label>Enter a date range</mat-label>
-        <mat-date-range-input [rangePicker]="picker">
-          <input matStartDate placeholder="Pickup Date" formControlName="startDate">
-          <input matEndDate placeholder="Return Date" formControlName="endDate">
-        </mat-date-range-input>
-        <mat-hint>MM/DD/YYYY – MM/DD/YYYY</mat-hint>
-        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-date-range-picker #picker></mat-date-range-picker>
-      </mat-form-field>
-    </div>
-    <div class="tw-flex tw-gap-5">
-      <mat-form-field>
-        <mat-label>Make</mat-label>
-        <mat-select formControlName="make">
-          <mat-option *ngFor="let vehicle of makes" [value]="vehicle.value" >
-            {{vehicle.viewValue}}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field>
-        <mat-label>Model</mat-label>
-        <mat-select formControlName="model">
-          <mat-option *ngFor="let vehicle of models" [value]="vehicle.value" >
-            {{vehicle.viewValue}}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
+  <ng-container *ngIf="availableVehicles.length; else searchForm">
+    <table mat-table [dataSource]="availableVehicles" class="mat-elevation-z8">
 
-    <div class="tw-flex tw-gap-5">
-      <mat-form-field>
-        <mat-label>Price Min</mat-label>
-        <input matInput formControlName="minPrice">
-      </mat-form-field>
-      <mat-form-field>
-        <mat-label>Price Max</mat-label>
-        <input matInput formControlName="maxPrice">
-      </mat-form-field>
-    </div>
+    
+      <!-- Make Column -->
+      <ng-container matColumnDef="make">
+        <th mat-header-cell *matHeaderCellDef> Make. </th>
+        <td mat-cell *matCellDef="let element"> {{element.make}} </td>
+      </ng-container>
+    
+      <!-- Model Column -->
+      <ng-container matColumnDef="model">
+        <th mat-header-cell *matHeaderCellDef> Model </th>
+        <td mat-cell *matCellDef="let element"> {{element.model}} </td>
+      </ng-container>
+    
+      <!-- VIN Column -->
+      <ng-container matColumnDef="vin">
+        <th mat-header-cell *matHeaderCellDef> VIN </th>
+        <td mat-cell *matCellDef="let element"> {{element.vin}} </td>
+      </ng-container>
+    
+      <!-- Price Column -->
+      <ng-container matColumnDef="price">
+        <th mat-header-cell *matHeaderCellDef> Price </th>
+        <td mat-cell *matCellDef="let element"> {{element.price}} </td>
+      </ng-container>
+    
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+    
+    
+  </ng-container>
+  <ng-template #searchForm>
+    <form class="tw-flex tw-flex-col tw-gap-5" [formGroup]="myForm" (ngSubmit)="onSubmit()">
+      <div class="tw-flex tw-w-full">
+        <mat-form-field>
+          <mat-label>Enter a date range</mat-label>
+          <mat-date-range-input [rangePicker]="picker">
+            <input matStartDate placeholder="Pickup Date" formControlName="startDate">
+            <input matEndDate placeholder="Return Date" formControlName="endDate">
+          </mat-date-range-input>
+          <mat-hint>MM/DD/YYYY – MM/DD/YYYY</mat-hint>
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-date-range-picker #picker></mat-date-range-picker>
+        </mat-form-field>
+      </div>
+      <div class="tw-flex tw-gap-5">
+        <mat-form-field>
+          <mat-label>Make</mat-label>
+          <mat-select formControlName="make">
+            <mat-option *ngFor="let vehicle of makes" [value]="vehicle.value" >
+              {{vehicle.viewValue}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Model</mat-label>
+          <mat-select formControlName="model">
+            <mat-option *ngFor="let vehicle of models" [value]="vehicle.value" >
+              {{vehicle.viewValue}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+  
+      <div class="tw-flex tw-gap-5">
+        <mat-form-field>
+          <mat-label>Price Min</mat-label>
+          <input matInput formControlName="minPrice">
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Price Max</mat-label>
+          <input matInput formControlName="maxPrice">
+        </mat-form-field>
+      </div>
+  
+      <div>
+        <button mat-raised-button color="primary" [disabled]="myForm.invalid">Search</button>
+      </div>
+    </form>
+  </ng-template>
 
-    <div>
-      <button mat-raised-button color="primary" [disabled]="myForm.invalid">Search</button>
-    </div>
-
-
-  </form>
 </div>

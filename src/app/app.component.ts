@@ -19,14 +19,15 @@ export class AppComponent implements OnInit {
   myForm?: FormGroup;
   makes: IFormSelect[] = [];
   models: IFormSelect[] = [];
-  vehicles: Vehicle[] = [];
-
+  allVehicles: Vehicle[] = [];
+  availableVehicles: Vehicle[] = [];
+  displayedColumns: string[] = ['make', 'model', 'vin', 'price'];
   constructor(private fb: FormBuilder) {}
 
   ngOnInit(): void {
     // get this data from the backend
     this.fetchVehicles().subscribe((vehicles) => {
-      this.vehicles = vehicles;
+      this.allVehicles = vehicles;
       this.createForm();
       this.watchForMakeChanges();
       // backend will send this one
@@ -46,8 +47,11 @@ export class AppComponent implements OnInit {
 
   private createForm(): void {
     this.myForm = this.fb.group({
+      // we are assuming that the user can select only one make at a time
       make: new FormControl(''),
+      // we are assuming that the user can select only one model at a time
       model: [{ value: '', disabled: true }],
+      // we are assuming that the price is for a day and is not related to startDate and endDate
       minPrice: new FormControl(''),
       maxPrice: new FormControl(''),
       startDate: new FormControl('', [Validators.required]),
@@ -59,7 +63,7 @@ export class AppComponent implements OnInit {
     const makeHash: Record<string, string> = {};
     const makes: IFormSelect[] = [];
 
-    this.vehicles.forEach((vehicle) => {
+    this.allVehicles.forEach((vehicle) => {
       if (makeHash[vehicle.make]) return;
 
       makeHash[vehicle.make] = vehicle.make;
@@ -78,7 +82,7 @@ export class AppComponent implements OnInit {
   }
 
   private calculateSelectedVehicleModels(): void {
-    const selectedVehicleModels = this.vehicles.filter(
+    const selectedVehicleModels = this.allVehicles.filter(
       (vehicle) => vehicle.make === this.myForm?.get('make')?.value
     );
     this.models = this.getUniqueModels(selectedVehicleModels);
@@ -98,6 +102,7 @@ export class AppComponent implements OnInit {
   onSubmit(): void {
     if (this.myForm?.invalid) return;
     console.log(this.parsedFormValue);
+    this.availableVehicles = this.allVehicles;
   }
 
   private get parsedFormValue(): IFormValue {
