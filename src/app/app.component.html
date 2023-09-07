@@ -1,4 +1,4 @@
-<div class="tw-py-10 tw-px-10  tw-flex tw-gap-5" *ngIf="formGroup">
+<div class="tw-py-10 tw-px-10  tw-flex tw-gap-5 tw-flex-wrap" *ngIf="formGroup">
   <form class="tw-flex tw-flex-col tw-gap-5" [formGroup]="formGroup" (ngSubmit)="onSubmit()">
     <div class="tw-flex tw-w-full">
       <mat-form-field>
@@ -12,7 +12,7 @@
         <mat-date-range-picker #picker></mat-date-range-picker>
       </mat-form-field>
     </div>
-    <div class="tw-flex tw-gap-5">
+    <div class="tw-flex tw-gap-5 tw-flex-wrap">
       <mat-form-field>
         <mat-label>Make</mat-label>
         <mat-select formControlName="make">
@@ -31,7 +31,7 @@
       </mat-form-field>
     </div>
 
-    <div class="tw-flex tw-gap-5">
+    <div class="tw-flex tw-gap-5 tw-flex-wrap">
       <mat-form-field>
         <mat-label>Price Min</mat-label>
         <input matInput formControlName="minPrice">

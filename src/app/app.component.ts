@@ -110,12 +110,17 @@ export class AppComponent implements OnInit {
         untilDestroyed(this),
         catchError((err) => this.handleError(err))
       )
-      .subscribe((data) => {
-        // sort the result by model
-        this.availableVehicles = data.sort((a, b) =>
-          a.model.localeCompare(b.model)
-        );
-      });
+      .subscribe((data) => this.handleSuccess(data));
+  }
+
+  private handleSuccess(data: Vehicle[]): void {
+    this.serverError = '';
+    this.availableVehicles = data.sort((a, b) => {
+      if (a.make === b.make) {
+        return a.model.localeCompare(b.model);
+      }
+      return a.make.localeCompare(b.make);
+    });
   }
 
   private parsedFormValue(formValue: IFormValue): IFormValue {
