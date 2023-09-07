@@ -105,7 +105,7 @@ export class AppComponent implements OnInit {
   onSubmit(): void {
     if (this.formGroup?.invalid) return;
     this.appService
-      .getAvailableCars(this.parsedFormValue)
+      .getAvailableCars(this.parsedFormValue(this.formGroup?.value))
       .pipe(
         untilDestroyed(this),
         catchError((err) => this.handleError(err))
@@ -118,15 +118,15 @@ export class AppComponent implements OnInit {
       });
   }
 
-  private get parsedFormValue(): IFormValue {
-    const formValue: IFormValue = { ...this.formGroup?.value };
+  private parsedFormValue(formValue: IFormValue): IFormValue {
+    const formValueCopy: IFormValue = { ...formValue };
     // delete all the empty values
-    Object.keys(formValue).forEach(
+    Object.keys(formValueCopy).forEach(
       (key) =>
-        formValue[key as keyof IFormValue] === '' &&
-        delete formValue[key as keyof IFormValue]
+        formValueCopy[key as keyof IFormValue] === '' &&
+        delete formValueCopy[key as keyof IFormValue]
     );
-    return formValue;
+    return formValueCopy;
   }
 
   private handleError(err: any): Observable<never> {
